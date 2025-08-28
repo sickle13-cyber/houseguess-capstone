@@ -1,0 +1,9 @@
+- Create game logo and choose main theme colors.
+- Design the main menu
+- Integrate Maps Data API.
+- Wire a map-based guess UI and use `geo.haversine_km` for exact distance scoring.
+- Add difficulty filters (continent/country).
+- Confirm that we can retrieve and save location photos.
+- Confirm that we can retrieve and parse location data.
+- Complete guessing loop logic.
+

@@ -18,7 +18,9 @@ This starter focuses on the GUI loop and data loading, with a stub for distance-
 
 ## Project Layout
 ```
-run.sh             # Entry point.
+run.sh             # Application entry point.
+README.md          # Starter information.
+TODO.txt           # Items to be completed.
 src/houseguess/
   __init__.py
   app.py           # Tkinter GUI

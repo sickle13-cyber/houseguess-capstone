@@ -38,6 +38,7 @@ def _extract_lat_lon(j: Dict[str, Any]) -> Optional[Tuple[float, float]]:
 
 # -------- RapidAPI: maps-data search --------
 def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, extra_params: Optional[dict] = None) -> List[Place]:
+    # haytham: maps-data search endpoint
     endpoint = f"{RAPIDAPI_BASE}{RAPIDAPI_SEARCH_PATH}"
     params: Dict[str, Any] = {"query": query, "limit": limit}
     if country:
@@ -47,7 +48,7 @@ def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, e
 
     headers = {"X-RapidAPI-Key": RAPIDAPI_KEY, "X-RapidAPI-Host": RAPIDAPI_HOST}
 
-    # DEBUG (comment out if noisy)
+    # haytham: debug (disable later if noisy)
     print(f"[DEBUG] GET {endpoint}")
     print(f"[DEBUG] params={params}")
     print(f"[DEBUG] host={headers['X-RapidAPI-Host']}, key_present={bool(RAPIDAPI_KEY)}")
@@ -55,18 +56,19 @@ def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, e
     r = requests.get(endpoint, headers=headers, params=params, timeout=DEFAULT_TIMEOUT)
     if r.status_code >= 400:
         print(f"[DEBUG] status={r.status_code} body={r.text[:500]}")
+        if r.status_code == 403:
+            raise RuntimeError("RapidAPI 403: Not subscribed or wrong app/key for maps-data.")
         r.raise_for_status()
-    data = r.json()
 
-    # maps-data shapes vary; try common containers
+    data = r.json()
     items = data.get("results") or data.get("items") or data.get("data") or data.get("result") or []
     if isinstance(items, dict):
-        # sometimes it's nested e.g. {"results": {"items":[...]}}
         items = items.get("items", [])
     if not isinstance(items, list):
         items = []
 
     out: List[Place] = []
+    import re  # haytham: for address parsing fallback
     for it in items:
         coords = _extract_lat_lon(it)
         if not coords:
@@ -75,15 +77,25 @@ def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, e
 
         pid = str(_pick(it, "place_id", "id", "ref", default=f"rapidapi:{lat},{lon}:{int(time.time())}"))
         name = _pick(it, "name", "title", default="Unknown")
+        addr = _pick(it, "formatted_address", "address", "vicinity", default="") or ""
 
-        # country often appears as country/country_code/country_name
-        country_val = _pick(it, "country", "country_code", "country_name", default="")
-        addr = _pick(it, "formatted_address", "address", "vicinity", default="")
+        # primary keys from payload
+        country_val = _pick(it, "country", "country_code", "country_name", default="") or ""
+
+        # haytham: fallback — try to infer country from the last component of the address
+        if not country_val and addr:
+            parts = [s.strip() for s in addr.split(",") if s.strip()]
+            if parts:
+                last = parts[-1]
+                # strip trailing postal codes and extra tokens (very naive, good enough)
+                country_guess = re.sub(r"\b\d[\dA-Za-z \-]*$", "", last).strip()
+                # don't accept a pure number/empty
+                if country_guess and not re.fullmatch(r"[\d \-]+", country_guess):
+                    country_val = country_guess
 
         cats = it.get("types") or it.get("categories") or []
         if isinstance(cats, str):
             cats = [cats]
-
         photos: List[Photo] = []
         for ph in (it.get("photos") or [])[:3]:
             url = _pick(ph, "url", "photo_url", default=None)

@@ -23,8 +23,9 @@ def one_round(q="restaurant") -> Place:
     if not places:
         raise RuntimeError("No places from API")
     p = random.choice(places)
+    country = p.country or "Unknown"
     cats = ",".join(p.categories) if p.categories else "-"
-    print(f"[ROUND] {p.name} - {p.country} @ {p.lat:.5f},{p.lon:.5f} cats={cats}")
+    print(f"[ROUND] {p.name} - {country} @ {p.lat:.5f},{p.lon:.5f} cats={cats}")
     return p
 
 if __name__ == "__main__":

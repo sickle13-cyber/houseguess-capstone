@@ -3,5 +3,5 @@ try:
     from dotenv import load_dotenv
     load_dotenv()
 except Exception:
-    pass
+    print(".env file not found. Environment variables need to be set for HouseGuess to work properly.")
 

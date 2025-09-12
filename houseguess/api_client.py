@@ -3,13 +3,13 @@ import os, time, requests
 from typing import Any, Dict, List, Optional, Tuple
 from .models import Place, Photo
 
-# ---- Config (override via .env) ----
+# Config (override via .env)
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
 RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST", "maps-data.p.rapidapi.com")
 RAPIDAPI_BASE = os.getenv("RAPIDAPI_BASE", f"https://{RAPIDAPI_HOST}")
-# maps-data search endpoint from your cURL snippet:
+# maps-data search endpoint
 RAPIDAPI_SEARCH_PATH = os.getenv("RAPIDAPI_SEARCH_PATH", "/searchmaps.php")
-# fill a real details path later if you need it:
+
 RAPIDAPI_DETAILS_PATH = os.getenv("RAPIDAPI_DETAILS_PATH", "/details.php")
 
 NOMINATIM_BASE = os.getenv("NOMINATIM_BASE", "https://nominatim.openstreetmap.org")
@@ -36,7 +36,7 @@ def _extract_lat_lon(j: Dict[str, Any]) -> Optional[Tuple[float, float]]:
         return float(c["lat"]), float(c.get("lon", c.get("lng")))
     return None
 
-# -------- RapidAPI: maps-data search --------
+# RapidAPI: maps-data search
 def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, extra_params: Optional[dict] = None) -> List[Place]:
     # haytham: maps-data search endpoint
     endpoint = f"{RAPIDAPI_BASE}{RAPIDAPI_SEARCH_PATH}"

@@ -1,7 +1,6 @@
-# HouseGuess (starter)
+# HouseGuess
 
-A simple Python 3 Tkinter GUI game (college capstone starter) where players see a house image and guess its origin.
-This starter focuses on the GUI loop and data loading, with a stub for distance-based scoring you can extend.
+A simple Python 3 Tkinter GUI game where players see a house image and guess its origin.
 
 ## Features (MVP)
 - Tkinter GUI
@@ -10,7 +9,7 @@ This starter focuses on the GUI loop and data loading, with a stub for distance-
 - Score tracking (basic)
 - Extensible structure for distance-based scoring and API integrations
 
-## Quick Start (Linux)
+## Quick Start (Linux / macOS)
 ```bash
 # Python 3.10+ recommended
 ./run.sh

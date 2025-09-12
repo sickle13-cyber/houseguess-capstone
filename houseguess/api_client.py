@@ -2,6 +2,7 @@ from __future__ import annotations
 import os, time, requests
 from typing import Any, Dict, List, Optional, Tuple
 from .models import Place, Photo
+import re  # haytham: for address parsing fallback
 
 # Config (override via .env)
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
@@ -10,9 +11,6 @@ RAPIDAPI_BASE = os.getenv("RAPIDAPI_BASE", f"https://{RAPIDAPI_HOST}")
 # maps-data search endpoint
 RAPIDAPI_SEARCH_PATH = os.getenv("RAPIDAPI_SEARCH_PATH", "/searchmaps.php")
 
-RAPIDAPI_DETAILS_PATH = os.getenv("RAPIDAPI_DETAILS_PATH", "/details.php")
-
-NOMINATIM_BASE = os.getenv("NOMINATIM_BASE", "https://nominatim.openstreetmap.org")
 DEFAULT_TIMEOUT = (5, 20)
 
 def _pick(d: Dict[str, Any], *keys, default=None):
@@ -68,7 +66,7 @@ def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, e
         items = []
 
     out: List[Place] = []
-    import re  # haytham: for address parsing fallback
+
     for it in items:
         coords = _extract_lat_lon(it)
         if not coords:
@@ -110,27 +108,3 @@ def rapidapi_details(place_id: str) -> Place:
     Placeholder until you locate the maps-data details endpoint on RapidAPI.
     """
     raise NotImplementedError("rapidapi_details not implemented yet")
-
-# -------- Nominatim (keyless dev fallback) --------
-def nominatim_search(query: str, limit: int = 5) -> List[Place]:
-    params = {
-        "q": query,
-        "format": "json",
-        "addressdetails": 1,
-        "limit": limit,
-        "accept-language": "en",
-    }
-    headers = {"User-Agent": "houseguess-dev/1.0 (course project)"}
-    r = requests.get(f"{NOMINATIM_BASE}/search", params=params, headers=headers, timeout=DEFAULT_TIMEOUT)
-    r.raise_for_status()
-    out: List[Place] = []
-    for it in r.json():
-        lat = float(it["lat"]); lon = float(it["lon"])
-        addr = it.get("display_name", "")
-        a = it.get("address", {}) or {}
-        country = a.get("country", a.get("country_code", "")) or ""
-        name = it.get("name") or addr.split(",")[0]
-        out.append(Place(str(it.get("place_id")), name, str(country), lat, lon, addr,
-                         [it.get("type")] if it.get("type") else [], [], "nominatim"))
-    return out
-

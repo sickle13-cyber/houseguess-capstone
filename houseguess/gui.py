@@ -16,6 +16,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Optional, Tuple
 
+from .api_client import rapidapi_search
+from .models import Place, Photo, RapidAPIConfig
+
 from PIL import Image, ImageTk  # pip install pillow
 from tkintermapview import TkinterMapView  # pip install tkintermapview
 
@@ -27,13 +30,6 @@ CREAM = "#F5E6C8"
 LIGHT_GREEN = "#6FCF97"   # Connor: Switched from orange to green since it's my wife and my wedding colors. :)
 TEAL = "#4CA6A8"
 GRAY = "#333333"
-
-# ---------------- Placeholder images before we get the backend integrated ----------------
-IMAGES = [
-    {"path": "assets/images/house_paris.jpg",  "lat": 48.8566,  "lon": 2.3522},    # Paris
-    {"path": "assets/images/house_tokyo.jpg",  "lat": 35.6762,  "lon": 139.6503},  # Tokyo
-    {"path": "assets/images/house_sydney.jpg", "lat": -33.8688, "lon": 151.2093},  # Sydney
-]
 
 # ---------------- Utilities ----------------
 def haversine_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> float:
@@ -201,7 +197,7 @@ class MainMenu(ttk.Frame):
         box.place(relx=0.5, rely=0.5, anchor="center")
 
         title = ttk.Label(box, style="Card.TLabel", text="HouseGuess", font=("Segoe UI", 56, "bold"))
-        start_btn = ttk.Button(box, text="Start", command=lambda: controller.start_fixed_images_session())
+        start_btn = ttk.Button(box, text="Start", command=lambda: controller.start_session())
         #Connor: Difficulty is kept on the main menu (placeholder)
         diff_btn = ttk.Button(box, text="Difficulty", command=self._set_difficulty)
         info_btn = ttk.Button(box, text="Info", command=lambda: controller.show("InfoScreen"))
@@ -269,9 +265,11 @@ class GameScreen(ttk.Frame):
         self._submitted: bool = False  # <-- lock after submit
 
     def new_round(self):
-        item = IMAGES[self._round_idx]
-        self.image.set_image_path(item["path"])
-        self._answer = (float(item["lat"]), float(item["lon"]))
+        #Preeth: Get next Place info and Photo.
+        place = self.controller.places[self._round_idx]
+        image = place.photos[0]
+        self.image.set_image_path(image.url)
+        self._answer = (place.lat, place.lon)
         self._pending_guess = None
         self._submitted = False
         self.controls.reset_round()
@@ -326,7 +324,7 @@ class GameScreen(ttk.Frame):
             )
         # Advance round index
         self._round_idx += 1
-        if self._round_idx < len(IMAGES):
+        if self._round_idx < len(self.places):
             self.new_round()
 
 class ResultsScreen(ttk.Frame):
@@ -346,13 +344,14 @@ class ResultsScreen(ttk.Frame):
 
 # ---------------- App Shell ----------------
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self, config: RapidAPIConfig):
         super().__init__()
         try:
             self.tk.call('tk', 'scaling', 1.0)
         except Exception:
             pass
 
+        self.config = config
         self.title("HouseGuess")
         self.geometry("1366x860")
         self.minsize(1100, 700)
@@ -397,16 +396,31 @@ class App(tk.Tk):
         self.show("MainMenu")
 
         #Connor: game session state
-        self._rounds = len(IMAGES)
-        self._round_index = 0
-        self._total_score = 0
+        # self._places = []
+        # self._rounds = len(self._places)
+        # self._round_index = 0
+        # self._total_score = 0
 
     def show(self, name: str):
         self.frames[name].tkraise()
 
     def start_fixed_images_session(self):
         #Connor: Reset and start with the fixed images
-        self._rounds = len(IMAGES)
+        # self._rounds = len(self._places)
+        # self._round_index = 0
+        # self._total_score = 0
+        self.places = []
+        self._rounds = len(self.places)
+        self._round_index = 0
+        self._total_score = 0
+        game: GameScreen = self.frames["GameScreen"]  # type: ignore
+        game._round_idx = 0
+        game.new_round()
+        self.show("GameScreen")
+
+    def start_session(self):
+        self.places = rapidapi_search(self.config, "places", country="USA")
+        self._rounds = len(self.places)
         self._round_index = 0
         self._total_score = 0
         game: GameScreen = self.frames["GameScreen"]  # type: ignore

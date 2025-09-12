@@ -1,9 +1,14 @@
-- Create game logo and choose main theme colors.
-- Design the main menu
-- Integrate Maps Data API.
-- Wire a map-based guess UI and use `geo.haversine_km` for exact distance scoring.
+- Create game logo
 - Add difficulty filters (continent/country).
-- Confirm that we can retrieve and save location photos.
-- Confirm that we can retrieve and parse location data.
 - Complete guessing loop logic.
+- Create a loading spinner animation and use where needed
+- Implement photo downloader after retrieving URLs from API calls
+- Add arrow buttons to photo view on left to let user cycle through other available photos
 
+✅ Confirm that we can retrieve and save location photos.
+✅ Confirm that we can retrieve and parse location data.
+✅ Implement WIP guessing loop logic.
+✅ Choose main theme colors.
+✅ Design the main menu
+✅ Integrate Maps Data API.
+✅ Wire a map-based guess UI and use `geo.haversine_km` for exact distance scoring.

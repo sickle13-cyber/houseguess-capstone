@@ -10,6 +10,9 @@ A simple Python 3 Tkinter GUI game where players see a house image and guess its
 - Extensible structure for distance-based scoring and API integrations
 
 ## Quick Start (Linux / macOS)
+
+First, set up the `.env.example` template file with a valid API key for the [Maps Data](https://rapidapi.com/alexanderxbx/api/maps-data) API. Then, rename it to `.env`
+
 ```bash
 # Python 3.10+ recommended
 python -m venv .venv

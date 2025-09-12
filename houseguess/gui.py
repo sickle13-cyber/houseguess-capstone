@@ -20,7 +20,9 @@ from PIL import Image, ImageTk  # pip install pillow
 from tkintermapview import TkinterMapView  # pip install tkintermapview
 
 # ---------------- Theme ----------------
+# Preeth: Consider renaming colors based on semantic purpose vs actual color.
 DARK_BLUE = "#0B2638"
+CARD_BG = "#0f3550"
 CREAM = "#F5E6C8"
 LIGHT_GREEN = "#6FCF97"   # Connor: Switched from orange to green since it's my wife and my wedding colors. :)
 TEAL = "#4CA6A8"
@@ -28,9 +30,9 @@ GRAY = "#333333"
 
 # ---------------- Placeholder images before we get the backend integrated ----------------
 IMAGES = [
-    {"path": "images/house_paris.jpg",  "lat": 48.8566,  "lon": 2.3522},    # Paris
-    {"path": "images/house_tokyo.jpg",  "lat": 35.6762,  "lon": 139.6503},  # Tokyo
-    {"path": "images/house_sydney.jpg", "lat": -33.8688, "lon": 151.2093},  # Sydney
+    {"path": "assets/images/house_paris.jpg",  "lat": 48.8566,  "lon": 2.3522},    # Paris
+    {"path": "assets/images/house_tokyo.jpg",  "lat": 35.6762,  "lon": 139.6503},  # Tokyo
+    {"path": "assets/images/house_sydney.jpg", "lat": -33.8688, "lon": 151.2093},  # Sydney
 ]
 
 # ---------------- Utilities ----------------
@@ -198,7 +200,7 @@ class MainMenu(ttk.Frame):
         box = ttk.Frame(self, style="Card.TFrame")
         box.place(relx=0.5, rely=0.5, anchor="center")
 
-        title = ttk.Label(box, text="HouseGuess", font=("Segoe UI", 56, "bold"))
+        title = ttk.Label(box, style="Card.TLabel", text="HouseGuess", font=("Segoe UI", 56, "bold"))
         start_btn = ttk.Button(box, text="Start", command=lambda: controller.start_fixed_images_session())
         #Connor: Difficulty is kept on the main menu (placeholder)
         diff_btn = ttk.Button(box, text="Difficulty", command=self._set_difficulty)
@@ -219,12 +221,12 @@ class InfoScreen(ttk.Frame):
         box = ttk.Frame(self, style="Card.TFrame")
         box.place(relx=0.5, rely=0.5, anchor="center")
 
-        ttk.Label(box, text="About HouseGuess", font=("Segoe UI", 36, "bold"), foreground=CREAM)\
+        ttk.Label(box,  style="Card.TLabel", text="About HouseGuess", font=("Segoe UI", 36, "bold"), foreground=CREAM)\
             .grid(row=0, column=0, pady=(24, 8), padx=24)
         info = ("HouseGuess is a simple guessing game where you look at a house "
                 "and try to guess its location on the map. You earn more points "
                 "the closer your guess is to the real spot.")
-        ttk.Label(box, text=info, wraplength=640, font=("Segoe UI", 18), foreground=CREAM)\
+        ttk.Label(box,  style="Card.TLabel", text=info, wraplength=640, font=("Segoe UI", 18), foreground=CREAM)\
             .grid(row=1, column=0, padx=24, pady=(0, 16))
 
         back_btn = ttk.Button(box, text="Back", command=lambda: controller.show("MainMenu"))
@@ -351,7 +353,7 @@ class App(tk.Tk):
         except Exception:
             pass
 
-        self.title("HouseGuess — Zoomable Map")
+        self.title("HouseGuess")
         self.geometry("1366x860")
         self.minsize(1100, 700)
         self.configure(bg=DARK_BLUE)
@@ -364,7 +366,7 @@ class App(tk.Tk):
 
         #Connor: Base styles
         style.configure("TFrame", background=DARK_BLUE)
-        style.configure("TLabel", background=DARK_BLUE, foreground=CREAM)
+        style.configure("TLabel", background=DARK_BLUE,foreground=CREAM)
 
         #Connor: Large, green buttons everywhere
         style.configure(
@@ -378,7 +380,8 @@ class App(tk.Tk):
                   background=[("active", TEAL)],
                   foreground=[("active", "white")])
 
-        style.configure("Card.TFrame", background="#0f3550")
+        style.configure("Card.TFrame", background=CARD_BG)
+        style.configure("Card.TLabel", background=CARD_BG)
 
         self.container = ttk.Frame(self)
         self.container.pack(fill="both", expand=True)

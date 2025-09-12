@@ -1,8 +1,4 @@
-from .app import HouseGuessApp
-
-def main():
-    app = HouseGuessApp()
-    app.mainloop()
+from .app import HouseGuessMain
 
 if __name__ == "__main__":
-    main()
+    HouseGuessMain()

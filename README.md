@@ -12,7 +12,10 @@ A simple Python 3 Tkinter GUI game where players see a house image and guess its
 ## Quick Start (Linux / macOS)
 ```bash
 # Python 3.10+ recommended
-./run.sh
+python -m venv .venv
+source .venv/source/activate
+pip install -r requirements.txt
+python3 -m houseguess
 ```
 
 ## Project Layout

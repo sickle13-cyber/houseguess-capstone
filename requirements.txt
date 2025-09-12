@@ -2,7 +2,7 @@
 Pillow>=10.0.0
 Pillow>=10.0.0
 requests>=2.32.0
-tk=0.1.0
-tkintermapview=1.29
+tk==0.1.0
+tkintermapview==1.29
 pytest>=8.0.0
 python-dotenv>=1.0.1

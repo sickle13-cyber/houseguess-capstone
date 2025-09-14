@@ -4,14 +4,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from .models import Place, Photo
 import re  # haytham: for address parsing fallback
 
-# Config (override via .env)
-RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
-RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST", "maps-data.p.rapidapi.com")
-RAPIDAPI_BASE = os.getenv("RAPIDAPI_BASE", f"https://{RAPIDAPI_HOST}")
-# maps-data search endpoint
-RAPIDAPI_SEARCH_PATH = os.getenv("RAPIDAPI_SEARCH_PATH", "/searchmaps.php")
-
-DEFAULT_TIMEOUT = (5, 20)
+from .models import RapidAPIConfig
+from .util import download_img
 
 def _pick(d: Dict[str, Any], *keys, default=None):
     for k in keys:
@@ -35,23 +29,23 @@ def _extract_lat_lon(j: Dict[str, Any]) -> Optional[Tuple[float, float]]:
     return None
 
 # RapidAPI: maps-data search
-def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, extra_params: Optional[dict] = None) -> List[Place]:
+def rapidapi_search(config: RapidAPIConfig, query: str, country: Optional[str] = None, limit: int = 5, extra_params: Optional[dict] = None) -> list[Place]:
     # haytham: maps-data search endpoint
-    endpoint = f"{RAPIDAPI_BASE}{RAPIDAPI_SEARCH_PATH}"
+    endpoint = f"{config.endpoint}{config.search_path}"
     params: Dict[str, Any] = {"query": query, "limit": limit}
     if country:
         params["country"] = country
     if extra_params:
         params.update(extra_params)
 
-    headers = {"X-RapidAPI-Key": RAPIDAPI_KEY, "X-RapidAPI-Host": RAPIDAPI_HOST}
+    headers = {"x-rapidapi-key": config.key, "x-rapidapi-host": config.host}
 
     # haytham: debug (disable later if noisy)
     print(f"[DEBUG] GET {endpoint}")
     print(f"[DEBUG] params={params}")
-    print(f"[DEBUG] host={headers['X-RapidAPI-Host']}, key_present={bool(RAPIDAPI_KEY)}")
+    print(f"[DEBUG] host={config.host}, key_present={bool(config.key)}")
 
-    r = requests.get(endpoint, headers=headers, params=params, timeout=DEFAULT_TIMEOUT)
+    r = requests.get(endpoint, headers=headers, params=params, timeout=config.timeout)
     if r.status_code >= 400:
         print(f"[DEBUG] status={r.status_code} body={r.text[:500]}")
         if r.status_code == 403:
@@ -65,7 +59,7 @@ def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, e
     if not isinstance(items, list):
         items = []
 
-    out: List[Place] = []
+    out: list[Place] = []
 
     for it in items:
         coords = _extract_lat_lon(it)
@@ -94,13 +88,31 @@ def rapidapi_search(query: str, country: Optional[str] = None, limit: int = 5, e
         cats = it.get("types") or it.get("categories") or []
         if isinstance(cats, str):
             cats = [cats]
-        photos: List[Photo] = []
+        photos: list[Photo] = []
         for ph in (it.get("photos") or [])[:3]:
-            url = _pick(ph, "url", "photo_url", default=None)
+            url = _pick(ph, "url", "src", default=None)
             if url:
-                photos.append(Photo(url=url, width=ph.get("width"), height=ph.get("height")))
+                max_width = ph.get("max_size")[0]
+                max_height = ph.get("max_size")[1]
+                suffix = url.rindex("=")
+                url = f"{url[:suffix + 1]}w{max_width}-h{max_height}"
+                if file_path := download_img(url):
+                    photo = Photo(file_path=file_path, width=max_width, height=max_height)
+                    print("[DEBUG] photo:", photo)
+                    photos.append(photo)
+                else:
+                    print("[DEBUG] Failed to get image...")
+    
+        place_link = _pick(it, "place_link", "place_url", default="")
+        place = Place(pid, name, str(country_val), float(lat), float(lon), place_link, address=addr, categories=cats, photos=photos)
+        if phone := _pick(it, "phone_number", "phone", default=""):
+            place.phone_number = str(phone)
 
-        out.append(Place(pid, name, str(country_val), float(lat), float(lon), addr, cats, photos, "rapidapi"))
+        if website := _pick(it, "website_number", "website", default=""):
+            place.website = str(website)
+
+        out.append(place)
+    print("[DEBUG] place count:", len(out))
     return out
 
 def rapidapi_details(place_id: str) -> Place:

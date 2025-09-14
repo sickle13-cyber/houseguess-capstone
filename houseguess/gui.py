@@ -16,33 +16,21 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Optional, Tuple
 
+from .api_client import rapidapi_search
+from .models import Place, Photo, RapidAPIConfig
+from .util import haversine_km
+
 from PIL import Image, ImageTk  # pip install pillow
 from tkintermapview import TkinterMapView  # pip install tkintermapview
 
 # ---------------- Theme ----------------
+# Preeth: Consider renaming colors based on semantic purpose vs actual color.
 DARK_BLUE = "#0B2638"
+CARD_BG = "#0f3550"
 CREAM = "#F5E6C8"
 LIGHT_GREEN = "#6FCF97"   # Connor: Switched from orange to green since it's my wife and my wedding colors. :)
 TEAL = "#4CA6A8"
 GRAY = "#333333"
-
-# ---------------- Placeholder images before we get the backend integrated ----------------
-IMAGES = [
-    {"path": "images/house_paris.jpg",  "lat": 48.8566,  "lon": 2.3522},    # Paris
-    {"path": "images/house_tokyo.jpg",  "lat": 35.6762,  "lon": 139.6503},  # Tokyo
-    {"path": "images/house_sydney.jpg", "lat": -33.8688, "lon": 151.2093},  # Sydney
-]
-
-# ---------------- Utilities ----------------
-def haversine_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> float:
-    """Great-circle distance in kilometers."""
-    R = 6371.0088
-    from math import radians, sin, cos, asin, sqrt
-    dlat = radians(b_lat - a_lat)
-    dlon = radians(b_lon - a_lon)
-    la1, la2 = radians(a_lat), radians(b_lat)
-    h = sin(dlat / 2) ** 2 + cos(la1) * cos(la2) * sin(dlon / 2) ** 2
-    return 2 * R * asin(sqrt(h))
 
 # ---------------- Widgets ----------------
 class PhotoPanel(ttk.Frame):
@@ -198,8 +186,8 @@ class MainMenu(ttk.Frame):
         box = ttk.Frame(self, style="Card.TFrame")
         box.place(relx=0.5, rely=0.5, anchor="center")
 
-        title = ttk.Label(box, text="HouseGuess", font=("Segoe UI", 56, "bold"))
-        start_btn = ttk.Button(box, text="Start", command=lambda: controller.start_fixed_images_session())
+        title = ttk.Label(box, style="Card.TLabel", text="HouseGuess", font=("Segoe UI", 56, "bold"))
+        start_btn = ttk.Button(box, text="Start", command=lambda: controller.start_session())
         #Connor: Difficulty is kept on the main menu (placeholder)
         diff_btn = ttk.Button(box, text="Difficulty", command=self._set_difficulty)
         info_btn = ttk.Button(box, text="Info", command=lambda: controller.show("InfoScreen"))
@@ -219,12 +207,12 @@ class InfoScreen(ttk.Frame):
         box = ttk.Frame(self, style="Card.TFrame")
         box.place(relx=0.5, rely=0.5, anchor="center")
 
-        ttk.Label(box, text="About HouseGuess", font=("Segoe UI", 36, "bold"), foreground=CREAM)\
+        ttk.Label(box,  style="Card.TLabel", text="About HouseGuess", font=("Segoe UI", 36, "bold"), foreground=CREAM)\
             .grid(row=0, column=0, pady=(24, 8), padx=24)
         info = ("HouseGuess is a simple guessing game where you look at a house "
                 "and try to guess its location on the map. You earn more points "
                 "the closer your guess is to the real spot.")
-        ttk.Label(box, text=info, wraplength=640, font=("Segoe UI", 18), foreground=CREAM)\
+        ttk.Label(box,  style="Card.TLabel", text=info, wraplength=640, font=("Segoe UI", 18), foreground=CREAM)\
             .grid(row=1, column=0, padx=24, pady=(0, 16))
 
         back_btn = ttk.Button(box, text="Back", command=lambda: controller.show("MainMenu"))
@@ -267,9 +255,11 @@ class GameScreen(ttk.Frame):
         self._submitted: bool = False  # <-- lock after submit
 
     def new_round(self):
-        item = IMAGES[self._round_idx]
-        self.image.set_image_path(item["path"])
-        self._answer = (float(item["lat"]), float(item["lon"]))
+        # Preeth: Get the next available Place info and Photo.
+        place = self.controller.places[self._round_idx]
+        image = place.photos[0]
+        self.image.set_image_path(image.file_path)
+        self._answer = (place.lat, place.lon)
         self._pending_guess = None
         self._submitted = False
         self.controls.reset_round()
@@ -324,7 +314,7 @@ class GameScreen(ttk.Frame):
             )
         # Advance round index
         self._round_idx += 1
-        if self._round_idx < len(IMAGES):
+        if self._round_idx < len(self.places):
             self.new_round()
 
 class ResultsScreen(ttk.Frame):
@@ -344,14 +334,15 @@ class ResultsScreen(ttk.Frame):
 
 # ---------------- App Shell ----------------
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self, config: RapidAPIConfig):
         super().__init__()
         try:
             self.tk.call('tk', 'scaling', 1.0)
         except Exception:
             pass
 
-        self.title("HouseGuess — Zoomable Map")
+        self.config = config
+        self.title("HouseGuess")
         self.geometry("1366x860")
         self.minsize(1100, 700)
         self.configure(bg=DARK_BLUE)
@@ -364,7 +355,7 @@ class App(tk.Tk):
 
         #Connor: Base styles
         style.configure("TFrame", background=DARK_BLUE)
-        style.configure("TLabel", background=DARK_BLUE, foreground=CREAM)
+        style.configure("TLabel", background=DARK_BLUE,foreground=CREAM)
 
         #Connor: Large, green buttons everywhere
         style.configure(
@@ -378,7 +369,8 @@ class App(tk.Tk):
                   background=[("active", TEAL)],
                   foreground=[("active", "white")])
 
-        style.configure("Card.TFrame", background="#0f3550")
+        style.configure("Card.TFrame", background=CARD_BG)
+        style.configure("Card.TLabel", background=CARD_BG)
 
         self.container = ttk.Frame(self)
         self.container.pack(fill="both", expand=True)
@@ -394,16 +386,31 @@ class App(tk.Tk):
         self.show("MainMenu")
 
         #Connor: game session state
-        self._rounds = len(IMAGES)
-        self._round_index = 0
-        self._total_score = 0
+        # self._places = []
+        # self._rounds = len(self._places)
+        # self._round_index = 0
+        # self._total_score = 0
 
     def show(self, name: str):
         self.frames[name].tkraise()
 
     def start_fixed_images_session(self):
         #Connor: Reset and start with the fixed images
-        self._rounds = len(IMAGES)
+        # self._rounds = len(self._places)
+        # self._round_index = 0
+        # self._total_score = 0
+        self.places = []
+        self._rounds = len(self.places)
+        self._round_index = 0
+        self._total_score = 0
+        game: GameScreen = self.frames["GameScreen"]  # type: ignore
+        game._round_idx = 0
+        game.new_round()
+        self.show("GameScreen")
+
+    def start_session(self):
+        self.places = rapidapi_search(self.config, "places", country="USA")
+        self._rounds = len(self.places)
         self._round_index = 0
         self._total_score = 0
         game: GameScreen = self.frames["GameScreen"]  # type: ignore

@@ -1,9 +1,23 @@
-- Create game logo and choose main theme colors.
-- Design the main menu
-- Integrate Maps Data API.
-- Wire a map-based guess UI and use `geo.haversine_km` for exact distance scoring.
-- Add difficulty filters (continent/country).
-- Confirm that we can retrieve and save location photos.
-- Confirm that we can retrieve and parse location data.
+PENDING:
+- CONNOR: Leaderboard.
+- Create game logo.
+- Add difficulty (expands / shrinks radius for acceptable guesses).
+- Add location filters (continent/country).
 - Complete guessing loop logic.
+- Create a quick loading spinner animation and add where needed.
+- Implement photo downloader after retrieving URLs from API calls.
+- Add arrow buttons to photo view on left to let user cycle through other available photos.
+- Add type hints where applicable.
+- Add proper documentation at both the module and function levels.
+- Add a Python formatter.
+- Lint and rigorously test code one last time before submission.
 
+COMPLETED:
+✅ Update README with new build instructions and remove sample text.
+✅ Confirm that we can retrieve and save location photos.
+✅ Confirm that we can retrieve and parse location data.
+✅ Implement WIP guessing loop logic.
+✅ Choose main theme colors.
+✅ Design the main menu.
+✅ Integrate Maps Data API.
+✅ Wire a map-based guess UI and use `geo.haversine_km` for exact distance scoring.

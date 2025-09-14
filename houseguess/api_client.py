@@ -5,6 +5,7 @@ from .models import Place, Photo
 import re  # haytham: for address parsing fallback
 
 from .models import RapidAPIConfig
+from .util import download_img
 
 def _pick(d: Dict[str, Any], *keys, default=None):
     for k in keys:
@@ -91,7 +92,10 @@ def rapidapi_search(config: RapidAPIConfig, query: str, country: Optional[str] =
         for ph in (it.get("photos") or [])[:3]:
             url = _pick(ph, "url", "src", default=None)
             if url:
-                photos.append(Photo(url=url, width=ph.get("width"), height=ph.get("height")))
+                if file_path := download_img(url):
+                    photos.append(Photo(file_path=file_path, width=ph.get("width"), height=ph.get("height")))
+                else:
+                    print("[DEBUG] Failed to get image...")
     
         place_link = _pick(it, "place_link", "place_url", default="")
         place = Place(pid, name, str(country_val), float(lat), float(lon), place_link, address=addr, categories=cats, photos=photos)

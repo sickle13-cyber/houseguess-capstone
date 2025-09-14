@@ -12,7 +12,7 @@ class RapidAPIConfig:
 
 @dataclass
 class Photo:
-    url: str
+    file_path: str
     width: Optional[int] = None
     height: Optional[int] = None
 

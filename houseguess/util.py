@@ -18,18 +18,18 @@ def download_img(url: str) -> str:
 
     prefix = "assets/images"
     if not os.path.isdir(prefix):
-        os.mkir(prefix)
+        os.makedirs(prefix)
 
     try:
         response = requests.get(url, stream=True)
-        
+
         # Verifies status == 200.
         response.raise_for_status() 
 
         # Generate date based filename for image.
         now = datetime.now()
         formatted_string = now.strftime("%Y_%m_%d-%H_%M_%S")
-        count = os.listdir(prefix)
+        count = len(os.listdir(prefix))
         file_name = f"{formatted_string}_{count + 1}.png"
 
         # Save image.

@@ -92,8 +92,14 @@ def rapidapi_search(config: RapidAPIConfig, query: str, country: Optional[str] =
         for ph in (it.get("photos") or [])[:3]:
             url = _pick(ph, "url", "src", default=None)
             if url:
+                max_width = ph.get("max_size")[0]
+                max_height = ph.get("max_size")[1]
+                suffix = url.rindex("=")
+                url = f"{url[:suffix + 1]}w{max_width}-h{max_height}"
                 if file_path := download_img(url):
-                    photos.append(Photo(file_path=file_path, width=ph.get("width"), height=ph.get("height")))
+                    photo = Photo(file_path=file_path, width=max_width, height=max_height)
+                    print("[DEBUG] photo:", photo)
+                    photos.append(photo)
                 else:
                     print("[DEBUG] Failed to get image...")
     

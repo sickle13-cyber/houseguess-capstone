@@ -18,6 +18,7 @@ from typing import Optional, Tuple
 
 from .api_client import rapidapi_search
 from .models import Place, Photo, RapidAPIConfig
+from .util import haversine_km
 
 from PIL import Image, ImageTk  # pip install pillow
 from tkintermapview import TkinterMapView  # pip install tkintermapview
@@ -30,17 +31,6 @@ CREAM = "#F5E6C8"
 LIGHT_GREEN = "#6FCF97"   # Connor: Switched from orange to green since it's my wife and my wedding colors. :)
 TEAL = "#4CA6A8"
 GRAY = "#333333"
-
-# ---------------- Utilities ----------------
-def haversine_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> float:
-    """Great-circle distance in kilometers."""
-    R = 6371.0088
-    from math import radians, sin, cos, asin, sqrt
-    dlat = radians(b_lat - a_lat)
-    dlon = radians(b_lon - a_lon)
-    la1, la2 = radians(a_lat), radians(b_lat)
-    h = sin(dlat / 2) ** 2 + cos(la1) * cos(la2) * sin(dlon / 2) ** 2
-    return 2 * R * asin(sqrt(h))
 
 # ---------------- Widgets ----------------
 class PhotoPanel(ttk.Frame):
@@ -265,10 +255,10 @@ class GameScreen(ttk.Frame):
         self._submitted: bool = False  # <-- lock after submit
 
     def new_round(self):
-        #Preeth: Get next Place info and Photo.
+        # Preeth: Get the next available Place info and Photo.
         place = self.controller.places[self._round_idx]
         image = place.photos[0]
-        self.image.set_image_path(image.url)
+        self.image.set_image_path(image.file_path)
         self._answer = (place.lat, place.lon)
         self._pending_guess = None
         self._submitted = False

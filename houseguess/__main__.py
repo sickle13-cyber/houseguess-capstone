@@ -5,9 +5,9 @@ Date: 9/21/2025
 Description: This file serves as the entrypoint for HouseGuess
 """
 
-"""Libraries"""
+# Libraries
 from .app import HouseGuessMain
 
-"""Start HouseGuess"""
+# Start HouseGuess
 if __name__ == "__main__":
     HouseGuessMain()

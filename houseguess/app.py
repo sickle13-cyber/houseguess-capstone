@@ -5,7 +5,7 @@ Date: 9/21/2025
 Description: This file contains initialization functionality for HouseGuess
 """
 
-"""Libraries"""
+# Libraries
 import os
 from dotenv import load_dotenv
 from .gui import App

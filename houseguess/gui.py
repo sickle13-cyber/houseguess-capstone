@@ -1,29 +1,31 @@
-# Connor Pollack 9/4/2025 
-# Requires: pip install pillow tkintermapview
+"""
+Project: HouseGuess
+Authors: Preeth Vijay, Haytham Moussa, Connor Pollack, Victor Ortiz Nazario, Sam Appiah, Collin Poag
+Date: 9/21/2025
+Description: This file contains initialization functionality for HouseGuess
+"""
 
+"""Libraries"""
+import math
+import os
+import tkinter as tk
+from .api_client import rapidapi_search
+from .models import Place, Photo, RapidAPIConfig
+from .util import haversine_km
 from __future__ import annotations
+from PIL import Image, ImageTk
+from tkinter import ttk, messagebox
+from tkintermapview import TkinterMapView
+from typing import Optional, Tuple
 
-# ---- Windows DPI fix (MUST run before creating Tk) ----
+"""Windows DPI fix (MUST run before creating Tk)"""
 try:
     from ctypes import windll
     windll.shcore.SetProcessDpiAwareness(1)  # per-monitor DPI awareness
 except Exception:
     pass
 
-import math
-import os
-import tkinter as tk
-from tkinter import ttk, messagebox
-from typing import Optional, Tuple
-
-from .api_client import rapidapi_search
-from .models import Place, Photo, RapidAPIConfig
-from .util import haversine_km
-
-from PIL import Image, ImageTk  # pip install pillow
-from tkintermapview import TkinterMapView  # pip install tkintermapview
-
-# ---------------- Theme ----------------
+"""Theme"""
 # Preeth: Consider renaming colors based on semantic purpose vs actual color.
 DARK_BLUE = "#0B2638"
 CARD_BG = "#0f3550"
@@ -32,10 +34,12 @@ LIGHT_GREEN = "#6FCF97"   # Connor: Switched from orange to green since it's my 
 TEAL = "#4CA6A8"
 GRAY = "#333333"
 
-# ---------------- Widgets ----------------
+"""Widgets"""
 class PhotoPanel(ttk.Frame):
-    """Left panel that displays the current round image with safe resizing."""
+"""Left panel that displays the current round image with safe resizing."""
+    
     def __init__(self, master):
+    """Initiate Photo Panel (left panel)"""
         super().__init__(master)
         self.canvas = tk.Canvas(self, bg="#101010", highlightthickness=1, highlightbackground=GRAY)
         self.canvas.pack(fill="both", expand=True)
@@ -46,6 +50,7 @@ class PhotoPanel(ttk.Frame):
         self._error: Optional[str] = None
 
     def set_image_path(self, path: str):
+        """Set path to find image for left panel"""
         self._pil = None
         self._tk = None
         self._error = None
@@ -62,6 +67,7 @@ class PhotoPanel(ttk.Frame):
         self._redraw()
 
     def _redraw(self):
+    """Refresh left panel"""
         c = self.canvas
         c.delete("all")
         w, h = max(1, c.winfo_width()), max(1, c.winfo_height())
@@ -81,8 +87,10 @@ class PhotoPanel(ttk.Frame):
         c.create_image(w // 2, h // 2, image=self._tk)
 
 class ZoomMap(ttk.Frame):
-    """Pan/zoom map using OpenStreetMap tiles. Accurate click marker with enable/disable."""
+"""Pan/zoom map using OpenStreetMap tiles. Accurate click marker with enable/disable."""
+
     def __init__(self, master, on_guess, start_center=(20.0, 0.0), start_zoom=2):
+        """Initiate ZoomMap panel (right panel)"""
         super().__init__(master)
         self.on_guess = on_guess
         self._marker = None
@@ -101,6 +109,7 @@ class ZoomMap(ttk.Frame):
         self._enabled = bool(value)
 
     def reset_pin(self):
+    """Reset user-selected position on map"""
         if self._marker:
             try:
                 self.map.delete(self._marker)
@@ -109,6 +118,7 @@ class ZoomMap(ttk.Frame):
             self._marker = None
 
     def _on_left_click(self, coords):
+        """records guess and updates game state"""
         if not self._enabled:
             return
         try:
@@ -125,7 +135,9 @@ class ZoomMap(ttk.Frame):
 
 class ControlPanel(ttk.Frame):
     """Right-side control stack: coords, big buttons, feedback."""
+    
     def __init__(self, master, on_submit, on_next):
+        """Initiate ControlPanel (right panel functionality)"""
         super().__init__(master)
 
         #Connor: Full-height stack (gets half of the right column)
@@ -162,15 +174,18 @@ class ControlPanel(ttk.Frame):
         self.submit_btn.configure(state="disabled")
 
     def set_coords(self, lat: float, lon: float):
+        """"""
         self.coords.set(f"Lat: {lat:.2f}   Lon: {lon:.2f}")
         self.submit_btn.configure(state="normal")
 
     def set_feedback(self, distance_km: float, score: int):
+        """Set """
         self.last_distance_km = distance_km
         self.last_score = score
         self.feedback.set(f"Distance: {distance_km:.0f} km    |    Score: {score}")
 
     def reset_round(self):
+        """Reset game"""
         self.coords.set("Lat: —   Lon: —")
         self.feedback.set("Distance: — km    |    Score: —")
         self.submit_btn.configure(state="disabled")

@@ -1,17 +1,23 @@
-from dotenv import load_dotenv
-import os
+"""
+Project: HouseGuess
+Authors: Preeth Vijay, Haytham Moussa, Connor Pollack, Victor Ortiz Nazario, Sam Appiah, Collin Poag
+Date: 9/21/2025
+Description: This file contains initialization functionality for HouseGuess
+"""
 
+"""Libraries"""
+import os
+from dotenv import load_dotenv
 from .gui import App
 from .models import RapidAPIConfig
 
 def HouseGuessMain():
-    # haytham: load .env so RAPIDAPI_* vars are available without hardcoding
+    """Function to initialize API configuration from .env file and start HouseGuess"""
     try:
         load_dotenv()
     except Exception:
         print(".env file not found. Environment variables need to be set for HouseGuess to work properly.")
 
-    # Config (override via .env)
     RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
     RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST", "maps-data.p.rapidapi.com")
     RAPIDAPI_BASE = os.getenv("RAPIDAPI_BASE", f"https://{RAPIDAPI_HOST}")

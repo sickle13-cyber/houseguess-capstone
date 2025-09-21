@@ -18,6 +18,7 @@ def HouseGuessMain():
     except Exception:
         print(".env file not found. Environment variables need to be set for HouseGuess to work properly.")
 
+    # Config (override via .env)
     RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
     RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST", "maps-data.p.rapidapi.com")
     RAPIDAPI_BASE = os.getenv("RAPIDAPI_BASE", f"https://{RAPIDAPI_HOST}")

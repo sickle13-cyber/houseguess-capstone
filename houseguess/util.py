@@ -5,7 +5,7 @@ Date: 9/21/2025
 Description: This file contains functionality to take API data and use it in HouseGuess operation
 """
 
-"""Libraries"""
+# Libraries
 import os
 import requests
 import shutil
@@ -23,7 +23,6 @@ def haversine_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> floa
 
 def download_img(url: str) -> str:
     """ Returns filename for an image after downloading it, if successful."""
-
     prefix = "assets/images"
     if not os.path.isdir(prefix):
         os.makedirs(prefix)

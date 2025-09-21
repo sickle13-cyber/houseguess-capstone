@@ -5,7 +5,7 @@ Date: 9/21/2025
 Description: This file contains initialization functionality for HouseGuess
 """
 
-"""Libraries"""
+# Libraries (Requires: pip install pillow tkintermapview)
 import math
 import os
 import tkinter as tk
@@ -18,14 +18,14 @@ from tkinter import ttk, messagebox
 from tkintermapview import TkinterMapView
 from typing import Optional, Tuple
 
-"""Windows DPI fix (MUST run before creating Tk)"""
+# Windows DPI fix (MUST run before creating Tk)
 try:
     from ctypes import windll
     windll.shcore.SetProcessDpiAwareness(1)  # per-monitor DPI awareness
 except Exception:
     pass
 
-"""Theme"""
+# ---------------- Theme ----------------
 # Preeth: Consider renaming colors based on semantic purpose vs actual color.
 DARK_BLUE = "#0B2638"
 CARD_BG = "#0f3550"
@@ -34,12 +34,12 @@ LIGHT_GREEN = "#6FCF97"   # Connor: Switched from orange to green since it's my 
 TEAL = "#4CA6A8"
 GRAY = "#333333"
 
-"""Widgets"""
+# ---------------- Widgets ----------------
 class PhotoPanel(ttk.Frame):
-"""Left panel that displays the current round image with safe resizing."""
+    """Left panel that displays the current round image with safe resizing."""
     
     def __init__(self, master):
-    """Initiate Photo Panel (left panel)"""
+        """Initiate Photo Panel (left panel)"""
         super().__init__(master)
         self.canvas = tk.Canvas(self, bg="#101010", highlightthickness=1, highlightbackground=GRAY)
         self.canvas.pack(fill="both", expand=True)
@@ -87,7 +87,7 @@ class PhotoPanel(ttk.Frame):
         c.create_image(w // 2, h // 2, image=self._tk)
 
 class ZoomMap(ttk.Frame):
-"""Pan/zoom map using OpenStreetMap tiles. Accurate click marker with enable/disable."""
+    """Pan/zoom map using OpenStreetMap tiles. Accurate click marker with enable/disable."""
 
     def __init__(self, master, on_guess, start_center=(20.0, 0.0), start_zoom=2):
         """Initiate ZoomMap panel (right panel)"""
@@ -109,7 +109,7 @@ class ZoomMap(ttk.Frame):
         self._enabled = bool(value)
 
     def reset_pin(self):
-    """Reset user-selected position on map"""
+        """Reset user-selected position on map"""
         if self._marker:
             try:
                 self.map.delete(self._marker)
@@ -179,13 +179,13 @@ class ControlPanel(ttk.Frame):
         self.submit_btn.configure(state="normal")
 
     def set_feedback(self, distance_km: float, score: int):
-        """Set """
+        """Set values to be displayed after guess is submitted"""
         self.last_distance_km = distance_km
         self.last_score = score
         self.feedback.set(f"Distance: {distance_km:.0f} km    |    Score: {score}")
 
     def reset_round(self):
-        """Reset game"""
+        """Reset game variables for next round"""
         self.coords.set("Lat: —   Lon: —")
         self.feedback.set("Distance: — km    |    Score: —")
         self.submit_btn.configure(state="disabled")

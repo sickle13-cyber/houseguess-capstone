@@ -5,7 +5,7 @@ Date: 9/21/2025
 Description: This file allows HouseGuess to make requests to the Maps Data API hosted on RapidAPI
 """
 
-"""Libraries""""
+# Libraries
 import os
 import time
 import requests
@@ -17,6 +17,7 @@ from .models import RapidAPIConfig
 from .util import download_img
 
 def _pick(d: Dict[str, Any], *keys, default=None):
+    """Parse API response for data"""
     for k in keys:
         if k in d and d[k] is not None:
             return d[k]

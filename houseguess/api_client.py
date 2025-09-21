@@ -9,7 +9,7 @@ Description: This file allows HouseGuess to make requests to the Maps Data API h
 import os
 import time
 import requests
-import re
+import re    # haytham: for address parsing fallback
 from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 from .models import Place, Photo
@@ -39,7 +39,7 @@ def _extract_lat_lon(j: Dict[str, Any]) -> Optional[Tuple[float, float]]:
     return None
 
 def rapidapi_search(config: RapidAPIConfig, query: str, country: Optional[str] = None, limit: int = 5, extra_params: Optional[dict] = None) -> list[Place]:
-    """Function to create and send search to Maps Data API"""
+    """Function to create and send search to Maps Data API endpoint"""
     endpoint = f"{config.endpoint}{config.search_path}"
     params: Dict[str, Any] = {"query": query, "limit": limit}
     if country:

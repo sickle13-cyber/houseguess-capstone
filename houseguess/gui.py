@@ -128,7 +128,7 @@ class ControlPanel(ttk.Frame):
     def __init__(self, master, on_submit, on_next):
         super().__init__(master)
 
-        #Connor: Full-height stack (gets half of the right column)
+        # Connor: Full-height stack (gets half of the right column)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=0)  # coords label
         self.rowconfigure(1, weight=1)  # buttons container
@@ -188,7 +188,7 @@ class MainMenu(ttk.Frame):
 
         title = ttk.Label(box, style="Card.TLabel", text="HouseGuess", font=("Segoe UI", 56, "bold"))
         start_btn = ttk.Button(box, text="Start", command=lambda: controller.start_session())
-        #Connor: Difficulty is kept on the main menu (placeholder)
+        # Connor: Difficulty is kept on the main menu (placeholder)
         diff_btn = ttk.Button(box, text="Difficulty", command=self._set_difficulty)
         info_btn = ttk.Button(box, text="Info", command=lambda: controller.show("InfoScreen"))
 
@@ -223,7 +223,7 @@ class GameScreen(ttk.Frame):
         super().__init__(parent)
         self.controller = controller
 
-        #Connor: Layout: left photo, right column split 60/40 (map top, controls bottom)
+        # Connor: Layout: left photo, right column split 60/40 (map top, controls bottom)
         self.columnconfigure(0, weight=3)  # left photo
         self.columnconfigure(1, weight=2)  # right column
         self.rowconfigure(0, weight=1)
@@ -240,23 +240,24 @@ class GameScreen(ttk.Frame):
         right.rowconfigure(0, weight=2)  # map takes up a lil more than half
         right.rowconfigure(1, weight=1)  # controls = <half
 
-        #Connor: Map fills the top half
+        # Connor: Map fills the top half
         self.map = ZoomMap(right, on_guess=self.on_map_guess, start_center=(20.0, 0.0), start_zoom=2)
         self.map.grid(row=0, column=0, sticky="nsew")
 
-        #Connor: Controls fill the bottom half
+        # Connor: Controls fill the bottom half
         self.controls = ControlPanel(right, on_submit=self.on_submit, on_next=self.on_next)
         self.controls.grid(row=1, column=0, sticky="nsew", pady=(12, 0))
 
-        #Connor: round state
-        self._round_idx = 0
+        # Connor: round state
+        # Victor: Removed _round_idx_ and will use self.controller._round_index
         self._pending_guess: Optional[Tuple[float, float]] = None
         self._answer: Tuple[float, float] = (0.0, 0.0)
         self._submitted: bool = False  # <-- lock after submit
 
     def new_round(self):
         # Preeth: Get the next available Place info and Photo.
-        place = self.controller.places[self._round_idx]
+        # Victor: Use self.controller._round_index
+        place = self.controller.places[self.controller._round_index]
         image = place.photos[0]
         self.image.set_image_path(image.file_path)
         self._answer = (place.lat, place.lon)
@@ -283,7 +284,7 @@ class GameScreen(ttk.Frame):
     def on_submit(self):
         if self._submitted:
             return  #Connor: prevent multiple submissions
-        #Connor: If no guess yet, treat as 0 points
+        # Connor: If no guess yet, treat as 0 points
         if not self._pending_guess:
             self.controls.set_feedback(distance_km=0.0, score=0)
             #Connor: still mark as submitted to keep "one try"
@@ -304,7 +305,8 @@ class GameScreen(ttk.Frame):
         self.map.set_enabled(False)
 
     def on_next(self):
-        #Connor: If no submit, record 0 pts
+        # Connor: If no submit, record 0 pts
+        # Victor: Removed advanced round index, record_result will handle next round.
         if self.controls.last_score is None:
             self.controller.record_result(distance_km=0.0, score=0)
         else:
@@ -312,10 +314,6 @@ class GameScreen(ttk.Frame):
                 distance_km=self.controls.last_distance_km or 0.0,
                 score=self.controls.last_score
             )
-        # Advance round index
-        self._round_idx += 1
-        if self._round_idx < len(self.places):
-            self.new_round()
 
 class ResultsScreen(ttk.Frame):
     def __init__(self, parent, controller: "App"):
@@ -353,11 +351,11 @@ class App(tk.Tk):
         except Exception:
             pass
 
-        #Connor: Base styles
+        # Connor: Base styles
         style.configure("TFrame", background=DARK_BLUE)
         style.configure("TLabel", background=DARK_BLUE,foreground=CREAM)
 
-        #Connor: Large, green buttons everywhere
+        # Connor: Large, green buttons everywhere
         style.configure(
             "TButton",
             background=LIGHT_GREEN,
@@ -395,7 +393,7 @@ class App(tk.Tk):
         self.frames[name].tkraise()
 
     def start_fixed_images_session(self):
-        #Connor: Reset and start with the fixed images
+        # Connor: Reset and start with the fixed images
         # self._rounds = len(self._places)
         # self._round_index = 0
         # self._total_score = 0
@@ -419,9 +417,16 @@ class App(tk.Tk):
         self.show("GameScreen")
 
     def record_result(self, distance_km: float, score: int):
+        # Victor: Restart next round
         self._total_score += score
         self._round_index += 1
         if self._round_index >= self._rounds:
+            # If no more rounds go to results
             self.frames["ResultsScreen"].set_summary(rounds=self._rounds, total=self._total_score)
             self.show("ResultsScreen")
+        else:
+            # Start the next round
+            game: GameScreen = self.frames["GameScreen"]
+            game._round_idx = self._round_index
+            game.new_round()
 

@@ -86,7 +86,7 @@ class ZoomMap(ttk.Frame):
         super().__init__(master)
         self.on_guess = on_guess
         self._marker = None
-        self._enabled = True  #Connor: block clicks when disabled
+        self._enabled = True  # Connor: block clicks when disabled
 
         self.map = TkinterMapView(self, corner_radius=0)
         self.map.pack(fill="both", expand=True)
@@ -189,7 +189,8 @@ class MainMenu(ttk.Frame):
         title = ttk.Label(box, style="Card.TLabel", text="HouseGuess", font=("Segoe UI", 56, "bold"))
         start_btn = ttk.Button(box, text="Start", command=lambda: controller.start_session())
         # Connor: Difficulty is kept on the main menu (placeholder)
-        diff_btn = ttk.Button(box, text="Difficulty", command=self._set_difficulty)
+        # Victor: Difficulty is selectable
+        diff_btn = ttk.Button(box, text="Difficulty", command=lambda: controller.show("DifficultyScreen"))
         info_btn = ttk.Button(box, text="Info", command=lambda: controller.show("InfoScreen"))
 
         title.grid(row=0, column=0, pady=(48, 28), padx=32)
@@ -197,8 +198,40 @@ class MainMenu(ttk.Frame):
         diff_btn.grid(row=2, column=0, sticky="ew", padx=32, pady=18)
         info_btn.grid(row=3, column=0, sticky="ew", padx=32, pady=(18, 48))
 
-    def _set_difficulty(self):
-        messagebox.showinfo("Difficulty", "In the final version, choose Easy/Medium/Hard before starting.")
+class DifficultyScreen(ttk.Frame):
+    def __init__(self, parent, controller: "App"):
+        # Victor: Set frame for difficulty screen
+        super().__init__(parent, style="TFrame")
+        self.controller = controller
+
+        box = ttk.Frame(self, style="Card.TFrame")
+        box.place(relx=0.5, rely=0.5, anchor="center")
+
+        title = ttk.Label(
+            box,
+            style="Card.TLabel",
+            text="Select Difficulty",
+            font=("Segoe UI", 48, "bold")
+        )
+        title.grid(row=0, column=0, pady=(48, 28), padx=32)
+
+        # Buttons for difficulties
+        easy_btn = ttk.Button(box, text="Easy", command=lambda: self._set_diff("easy"))
+        med_btn = ttk.Button(box, text="Medium", command=lambda: self._set_diff("medium"))
+        hard_btn = ttk.Button(box, text="Hard", command=lambda: self._set_diff("hard"))
+
+        # Back button
+        back_btn = ttk.Button(box, text="Back", command=lambda: controller.show("MainMenu"))
+
+        easy_btn.grid(row=1, column=0, sticky="ew", padx=32, pady=18)
+        med_btn.grid(row=2, column=0, sticky="ew", padx=32, pady=18)
+        hard_btn.grid(row=3, column=0, sticky="ew", padx=32, pady=18)
+        back_btn.grid(row=4, column=0, sticky="ew", padx=32, pady=(18, 48))
+
+    def _set_diff(self, level: str):
+            self.controller.difficulty = level
+            messagebox.showinfo("Difficulty Set", f"Difficulty set to {level.title()}")
+            self.controller.show("MainMenu")
 
 class InfoScreen(ttk.Frame):
     def __init__(self, parent, controller: "App"):
@@ -277,17 +310,17 @@ class GameScreen(ttk.Frame):
 
     def on_map_guess(self, lat: float, lon: float):
         if self._submitted:
-            return  #Connor: ignore clicks after submission
+            return  # Connor: ignore clicks after submission
         self._pending_guess = (lat, lon)
         self.controls.set_coords(lat, lon)
 
     def on_submit(self):
         if self._submitted:
-            return  #Connor: prevent multiple submissions
+            return  # Connor: prevent multiple submissions
         # Connor: If no guess yet, treat as 0 points
         if not self._pending_guess:
             self.controls.set_feedback(distance_km=0.0, score=0)
-            #Connor: still mark as submitted to keep "one try"
+            # Connor: still mark as submitted to keep "one try"
             self._submitted = True
             self.controls.submit_btn.configure(state="disabled")
             self.map.set_enabled(False)
@@ -296,10 +329,19 @@ class GameScreen(ttk.Frame):
         g_lat, g_lon = self._pending_guess
         t_lat, t_lon = self._answer
         d = haversine_km(g_lat, g_lon, t_lat, t_lon)
+        # Victor: Difficulty control
+        diff = self.controller.difficulty
+        if diff == "easy":
+            decay = 1000.0
+        elif diff == "hard":
+            decay = 500.0
+        else:  # medium
+            decay = 750.0
+        
         score = int(5000 * math.exp(-d / 750.0))
         self.controls.set_feedback(distance_km=d, score=score)
 
-        #Connor: lock the round,disable submit, disable map (no more guesses)
+        # Connor: lock the round,disable submit, disable map (no more guesses)
         self._submitted = True
         self.controls.submit_btn.configure(state="disabled")
         self.map.set_enabled(False)
@@ -344,6 +386,7 @@ class App(tk.Tk):
         self.geometry("1366x860")
         self.minsize(1100, 700)
         self.configure(bg=DARK_BLUE)
+        self.difficulty = "medium"  # Victor: default difficulty
 
         style = ttk.Style(self)
         try:
@@ -376,14 +419,15 @@ class App(tk.Tk):
         self.container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        for F in (MainMenu, GameScreen, ResultsScreen, InfoScreen):
+        # Victor: Added difficulty screen
+        for F in (MainMenu, GameScreen, ResultsScreen, InfoScreen, DifficultyScreen):
             frame = F(self.container, controller=self)
             self.frames[F.__name__] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
         self.show("MainMenu")
 
-        #Connor: game session state
+        # Connor: game session state
         # self._places = []
         # self._rounds = len(self._places)
         # self._round_index = 0

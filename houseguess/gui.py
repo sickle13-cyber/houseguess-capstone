@@ -1,27 +1,29 @@
-# Connor Pollack 9/4/2025 
-# Requires: pip install pillow tkintermapview
+"""
+Project: HouseGuess
+Authors: Preeth Vijay, Haytham Moussa, Connor Pollack, Victor Ortiz Nazario, Sam Appiah, Collin Poag
+Date: 9/21/2025
+Description: This file contains initialization functionality for HouseGuess
+"""
 
+# Libraries (Requires: pip install pillow tkintermapview)
+import math
+import os
+import tkinter as tk
+from .api_client import rapidapi_search
+from .models import Place, Photo, RapidAPIConfig
+from .util import haversine_km
 from __future__ import annotations
+from PIL import Image, ImageTk
+from tkinter import ttk, messagebox
+from tkintermapview import TkinterMapView
+from typing import Optional, Tuple
 
-# ---- Windows DPI fix (MUST run before creating Tk) ----
+# Windows DPI fix (MUST run before creating Tk)
 try:
     from ctypes import windll
     windll.shcore.SetProcessDpiAwareness(1)  # per-monitor DPI awareness
 except Exception:
     pass
-
-import math
-import os
-import tkinter as tk
-from tkinter import ttk, messagebox
-from typing import Optional, Tuple
-
-from .api_client import rapidapi_search
-from .models import Place, Photo, RapidAPIConfig
-from .util import haversine_km
-
-from PIL import Image, ImageTk  # pip install pillow
-from tkintermapview import TkinterMapView  # pip install tkintermapview
 
 # ---------------- Theme ----------------
 # Preeth: Consider renaming colors based on semantic purpose vs actual color.
@@ -35,7 +37,9 @@ GRAY = "#333333"
 # ---------------- Widgets ----------------
 class PhotoPanel(ttk.Frame):
     """Left panel that displays the current round image with safe resizing."""
+    
     def __init__(self, master):
+        """Initiate Photo Panel (left panel)"""
         super().__init__(master)
         self.canvas = tk.Canvas(self, bg="#101010", highlightthickness=1, highlightbackground=GRAY)
         self.canvas.pack(fill="both", expand=True)
@@ -46,6 +50,7 @@ class PhotoPanel(ttk.Frame):
         self._error: Optional[str] = None
 
     def set_image_path(self, path: str):
+        """Set path to find image for left panel"""
         self._pil = None
         self._tk = None
         self._error = None
@@ -62,6 +67,7 @@ class PhotoPanel(ttk.Frame):
         self._redraw()
 
     def _redraw(self):
+    """Refresh left panel"""
         c = self.canvas
         c.delete("all")
         w, h = max(1, c.winfo_width()), max(1, c.winfo_height())
@@ -82,7 +88,9 @@ class PhotoPanel(ttk.Frame):
 
 class ZoomMap(ttk.Frame):
     """Pan/zoom map using OpenStreetMap tiles. Accurate click marker with enable/disable."""
+
     def __init__(self, master, on_guess, start_center=(20.0, 0.0), start_zoom=2):
+        """Initiate ZoomMap panel (right panel)"""
         super().__init__(master)
         self.on_guess = on_guess
         self._marker = None
@@ -101,6 +109,7 @@ class ZoomMap(ttk.Frame):
         self._enabled = bool(value)
 
     def reset_pin(self):
+        """Reset user-selected position on map"""
         if self._marker:
             try:
                 self.map.delete(self._marker)
@@ -109,6 +118,7 @@ class ZoomMap(ttk.Frame):
             self._marker = None
 
     def _on_left_click(self, coords):
+        """records guess and updates game state"""
         if not self._enabled:
             return
         try:
@@ -125,7 +135,9 @@ class ZoomMap(ttk.Frame):
 
 class ControlPanel(ttk.Frame):
     """Right-side control stack: coords, big buttons, feedback."""
+    
     def __init__(self, master, on_submit, on_next):
+        """Initiate ControlPanel (right panel functionality)"""
         super().__init__(master)
 
         # Connor: Full-height stack (gets half of the right column)
@@ -162,15 +174,18 @@ class ControlPanel(ttk.Frame):
         self.submit_btn.configure(state="disabled")
 
     def set_coords(self, lat: float, lon: float):
+        """Sets coordinates and unlock submit"""
         self.coords.set(f"Lat: {lat:.2f}   Lon: {lon:.2f}")
         self.submit_btn.configure(state="normal")
 
     def set_feedback(self, distance_km: float, score: int):
+        """Set values to be displayed after guess is submitted"""
         self.last_distance_km = distance_km
         self.last_score = score
         self.feedback.set(f"Distance: {distance_km:.0f} km    |    Score: {score}")
 
     def reset_round(self):
+        """Reset game variables for next round"""
         self.coords.set("Lat: —   Lon: —")
         self.feedback.set("Distance: — km    |    Score: —")
         self.submit_btn.configure(state="disabled")
@@ -179,7 +194,9 @@ class ControlPanel(ttk.Frame):
 
 # ---------------- Screens ----------------
 class MainMenu(ttk.Frame):
+    """Class to represent Main Menu screen"""
     def __init__(self, parent, controller: "App"):
+        """Initialize MainMenu"""
         super().__init__(parent, style="TFrame")
         self.controller = controller
 
@@ -200,7 +217,7 @@ class MainMenu(ttk.Frame):
 
 class DifficultyScreen(ttk.Frame):
     def __init__(self, parent, controller: "App"):
-        # Victor: Set frame for difficulty screen
+       """Set difficulty setting in main menu"""
         super().__init__(parent, style="TFrame")
         self.controller = controller
 
@@ -234,7 +251,9 @@ class DifficultyScreen(ttk.Frame):
             self.controller.show("MainMenu")
 
 class InfoScreen(ttk.Frame):
+    """Class to represent About page on Main Menu"""
     def __init__(self, parent, controller: "App"):
+        """Initialize InfoScreen"""
         super().__init__(parent, style="TFrame")
         self.controller = controller
         box = ttk.Frame(self, style="Card.TFrame")
@@ -252,7 +271,9 @@ class InfoScreen(ttk.Frame):
         back_btn.grid(row=2, column=0, pady=(0, 24))
 
 class GameScreen(ttk.Frame):
+    """Class that represents actual gameplay screen"""
     def __init__(self, parent, controller: "App"):
+        """Initialize GameScreen"""
         super().__init__(parent)
         self.controller = controller
 
@@ -288,6 +309,7 @@ class GameScreen(ttk.Frame):
         self._submitted: bool = False  # <-- lock after submit
 
     def new_round(self):
+        """Start new round"""
         # Preeth: Get the next available Place info and Photo.
         # Victor: Use self.controller._round_index
         place = self.controller.places[self.controller._round_index]
@@ -309,12 +331,14 @@ class GameScreen(ttk.Frame):
      #       pass
 
     def on_map_guess(self, lat: float, lon: float):
+        """Save coordinates for guess and stop guesses after submission"""
         if self._submitted:
             return  # Connor: ignore clicks after submission
         self._pending_guess = (lat, lon)
         self.controls.set_coords(lat, lon)
 
     def on_submit(self):
+        """Lock round after submission"""
         if self._submitted:
             return  # Connor: prevent multiple submissions
         # Connor: If no guess yet, treat as 0 points
@@ -347,7 +371,8 @@ class GameScreen(ttk.Frame):
         self.map.set_enabled(False)
 
     def on_next(self):
-        # Connor: If no submit, record 0 pts
+        """Save score and advance round counter"""
+        #Connor: If no submit, record 0 pts
         # Victor: Removed advanced round index, record_result will handle next round.
         if self.controls.last_score is None:
             self.controller.record_result(distance_km=0.0, score=0)
@@ -358,7 +383,9 @@ class GameScreen(ttk.Frame):
             )
 
 class ResultsScreen(ttk.Frame):
+    """Class that represents screen after game submission"""
     def __init__(self, parent, controller: "App"):
+        """Initialize ResultsScreen"""
         super().__init__(parent)
         self.controller = controller
         self.title = ttk.Label(self, text="Results", font=("Segoe UI", 36, "bold"))
@@ -370,11 +397,13 @@ class ResultsScreen(ttk.Frame):
         back_btn.pack()
 
     def set_summary(self, rounds: int, total: int):
+        """Set summary value to be displayed in results screen"""
         self.summary.config(text=f"Rounds Played: {rounds}\nTotal Score: {total}")
 
 # ---------------- App Shell ----------------
 class App(tk.Tk):
     def __init__(self, config: RapidAPIConfig):
+        """Initialize App function"""
         super().__init__()
         try:
             self.tk.call('tk', 'scaling', 1.0)
@@ -434,9 +463,11 @@ class App(tk.Tk):
         # self._total_score = 0
 
     def show(self, name: str):
+        """Show screen"""
         self.frames[name].tkraise()
 
     def start_fixed_images_session(self):
+        """New Round after reset"""
         # Connor: Reset and start with the fixed images
         # self._rounds = len(self._places)
         # self._round_index = 0
@@ -451,6 +482,7 @@ class App(tk.Tk):
         self.show("GameScreen")
 
     def start_session(self):
+        """Initial start to game"""
         self.places = rapidapi_search(self.config, "places", country="USA")
         self._rounds = len(self.places)
         self._round_index = 0
@@ -461,7 +493,7 @@ class App(tk.Tk):
         self.show("GameScreen")
 
     def record_result(self, distance_km: float, score: int):
-        # Victor: Restart next round
+        """Record score and show Results screen"""
         self._total_score += score
         self._round_index += 1
         if self._round_index >= self._rounds:

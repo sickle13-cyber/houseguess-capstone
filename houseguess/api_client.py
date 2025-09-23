@@ -1,19 +1,30 @@
+"""
+Project: HouseGuess
+Authors: Preeth Vijay, Haytham Moussa, Connor Pollack, Victor Ortiz Nazario, Sam Appiah, Collin Poag
+Date: 9/21/2025
+Description: This file allows HouseGuess to make requests to the Maps Data API hosted on RapidAPI
+"""
+
+# Libraries
+import os
+import time
+import requests
+import re    # haytham: for address parsing fallback
 from __future__ import annotations
-import os, time, requests
 from typing import Any, Dict, List, Optional, Tuple
 from .models import Place, Photo
-import re  # haytham: for address parsing fallback
-
 from .models import RapidAPIConfig
 from .util import download_img
 
 def _pick(d: Dict[str, Any], *keys, default=None):
+    """Parse API response for data"""
     for k in keys:
         if k in d and d[k] is not None:
             return d[k]
     return default
 
 def _extract_lat_lon(j: Dict[str, Any]) -> Optional[Tuple[float, float]]:
+    """Extract Longitude and Latitude from API response for later use"""
     # common shapes across providers
     if "lat" in j and ("lon" in j or "lng" in j):
         return float(j["lat"]), float(j.get("lon", j.get("lng")))
@@ -28,9 +39,8 @@ def _extract_lat_lon(j: Dict[str, Any]) -> Optional[Tuple[float, float]]:
         return float(c["lat"]), float(c.get("lon", c.get("lng")))
     return None
 
-# RapidAPI: maps-data search
 def rapidapi_search(config: RapidAPIConfig, query: str, country: Optional[str] = None, limit: int = 5, extra_params: Optional[dict] = None) -> list[Place]:
-    # haytham: maps-data search endpoint
+    """Function to create and send search to Maps Data API endpoint"""
     endpoint = f"{config.endpoint}{config.search_path}"
     params: Dict[str, Any] = {"query": query, "limit": limit}
     if country:
@@ -117,6 +127,6 @@ def rapidapi_search(config: RapidAPIConfig, query: str, country: Optional[str] =
 
 def rapidapi_details(place_id: str) -> Place:
     """
-    Placeholder until you locate the maps-data details endpoint on RapidAPI.
+    Placeholder until maps-data details endpoint is located on RapidAPI.
     """
     raise NotImplementedError("rapidapi_details not implemented yet")

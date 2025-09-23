@@ -1,8 +1,16 @@
-from math import radians, sin, cos, asin, sqrt
-from datetime import datetime
+"""
+Project: HouseGuess
+Authors: Preeth Vijay, Haytham Moussa, Connor Pollack, Victor Ortiz Nazario, Sam Appiah, Collin Poag
+Date: 9/21/2025
+Description: This file contains functionality to take API data and use it in HouseGuess operation
+"""
+
+# Libraries
+import os
 import requests
 import shutil
-import os
+from datetime import datetime
+from math import radians, sin, cos, asin, sqrt
 
 def haversine_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> float:
     """Great-circle distance in kilometers."""
@@ -15,7 +23,6 @@ def haversine_km(a_lat: float, a_lon: float, b_lat: float, b_lon: float) -> floa
 
 def download_img(url: str) -> str:
     """ Returns filename for an image after downloading it, if successful."""
-
     prefix = "assets/images"
     if not os.path.isdir(prefix):
         os.makedirs(prefix)

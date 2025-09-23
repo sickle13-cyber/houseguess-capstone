@@ -174,7 +174,7 @@ class ControlPanel(ttk.Frame):
         self.submit_btn.configure(state="disabled")
 
     def set_coords(self, lat: float, lon: float):
-        """"""
+        """Sets coordinates and unlock submit"""
         self.coords.set(f"Lat: {lat:.2f}   Lon: {lon:.2f}")
         self.submit_btn.configure(state="normal")
 
@@ -194,7 +194,9 @@ class ControlPanel(ttk.Frame):
 
 # ---------------- Screens ----------------
 class MainMenu(ttk.Frame):
+    """Class to represent Main Menu screen"""
     def __init__(self, parent, controller: "App"):
+        """Initialize MainMenu"""
         super().__init__(parent, style="TFrame")
         self.controller = controller
 
@@ -213,10 +215,13 @@ class MainMenu(ttk.Frame):
         info_btn.grid(row=3, column=0, sticky="ew", padx=32, pady=(18, 48))
 
     def _set_difficulty(self):
+        """Set difficulty setting in main menu"""
         messagebox.showinfo("Difficulty", "In the final version, choose Easy/Medium/Hard before starting.")
 
 class InfoScreen(ttk.Frame):
+    """Class to represent About page on Main Menu"""
     def __init__(self, parent, controller: "App"):
+        """Initialize InfoScreen"""
         super().__init__(parent, style="TFrame")
         self.controller = controller
         box = ttk.Frame(self, style="Card.TFrame")
@@ -234,7 +239,9 @@ class InfoScreen(ttk.Frame):
         back_btn.grid(row=2, column=0, pady=(0, 24))
 
 class GameScreen(ttk.Frame):
+    """Class that represents actual gameplay screen"""
     def __init__(self, parent, controller: "App"):
+        """Initialize GameScreen"""
         super().__init__(parent)
         self.controller = controller
 
@@ -270,6 +277,7 @@ class GameScreen(ttk.Frame):
         self._submitted: bool = False  # <-- lock after submit
 
     def new_round(self):
+        """Start new round"""
         # Preeth: Get the next available Place info and Photo.
         place = self.controller.places[self._round_idx]
         image = place.photos[0]
@@ -290,12 +298,14 @@ class GameScreen(ttk.Frame):
      #       pass
 
     def on_map_guess(self, lat: float, lon: float):
+        """Save coordinates for guess and stop guesses after submission"""
         if self._submitted:
             return  #Connor: ignore clicks after submission
         self._pending_guess = (lat, lon)
         self.controls.set_coords(lat, lon)
 
     def on_submit(self):
+        """Lock round after submission"""
         if self._submitted:
             return  #Connor: prevent multiple submissions
         #Connor: If no guess yet, treat as 0 points
@@ -319,6 +329,7 @@ class GameScreen(ttk.Frame):
         self.map.set_enabled(False)
 
     def on_next(self):
+        """Save score and advance round counter"""
         #Connor: If no submit, record 0 pts
         if self.controls.last_score is None:
             self.controller.record_result(distance_km=0.0, score=0)
@@ -333,7 +344,9 @@ class GameScreen(ttk.Frame):
             self.new_round()
 
 class ResultsScreen(ttk.Frame):
+    """Class that represents screen after game submission"""
     def __init__(self, parent, controller: "App"):
+        """Initialize ResultsScreen"""
         super().__init__(parent)
         self.controller = controller
         self.title = ttk.Label(self, text="Results", font=("Segoe UI", 36, "bold"))
@@ -345,11 +358,13 @@ class ResultsScreen(ttk.Frame):
         back_btn.pack()
 
     def set_summary(self, rounds: int, total: int):
+        """Set summary value to be displayed in results screen"""
         self.summary.config(text=f"Rounds Played: {rounds}\nTotal Score: {total}")
 
 # ---------------- App Shell ----------------
 class App(tk.Tk):
     def __init__(self, config: RapidAPIConfig):
+        """Initialize App function"""
         super().__init__()
         try:
             self.tk.call('tk', 'scaling', 1.0)
@@ -407,10 +422,12 @@ class App(tk.Tk):
         # self._total_score = 0
 
     def show(self, name: str):
+        """Show screen"""
         self.frames[name].tkraise()
 
     def start_fixed_images_session(self):
-        #Connor: Reset and start with the fixed images
+        """New Round after reset"""
+        # Connor: Reset and start with the fixed images
         # self._rounds = len(self._places)
         # self._round_index = 0
         # self._total_score = 0
@@ -424,6 +441,7 @@ class App(tk.Tk):
         self.show("GameScreen")
 
     def start_session(self):
+        """Initial start to game"""
         self.places = rapidapi_search(self.config, "places", country="USA")
         self._rounds = len(self.places)
         self._round_index = 0
@@ -434,6 +452,7 @@ class App(tk.Tk):
         self.show("GameScreen")
 
     def record_result(self, distance_km: float, score: int):
+        """Record score and show Results screen"""
         self._total_score += score
         self._round_index += 1
         if self._round_index >= self._rounds:

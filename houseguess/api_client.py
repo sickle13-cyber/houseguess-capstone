@@ -6,15 +6,15 @@ Description: This file allows HouseGuess to make requests to the Maps Data API h
 """
 
 # Libraries
+from __future__ import annotations
 import os
 import time
 import requests
 import re    # haytham: for address parsing fallback
-from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
-from .models import Place, Photo
-from .models import RapidAPIConfig
-from .util import download_img
+from models import Place, Photo
+from models import RapidAPIConfig
+from util import download_img
 
 def _pick(d: Dict[str, Any], *keys, default=None):
     """Parse API response for data"""

@@ -21,7 +21,7 @@ Afterwards, paste the following into your terminal.
 ```bash
 # Python 3.10+ recommended
 python3 -m venv .venv
-source .venv/source/activate
+source .venv/bin/activate
 pip install -r requirements.txt
 python3 -m houseguess
 ```

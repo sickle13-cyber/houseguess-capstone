@@ -67,7 +67,7 @@ class PhotoPanel(ttk.Frame):
         self._redraw()
 
     def _redraw(self):
-    """Refresh left panel"""
+        """Refresh left panel"""
         c = self.canvas
         c.delete("all")
         w, h = max(1, c.winfo_width()), max(1, c.winfo_height())

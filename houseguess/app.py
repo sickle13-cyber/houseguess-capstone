@@ -8,8 +8,8 @@ Description: This file contains initialization functionality for HouseGuess
 # Libraries
 import os
 from dotenv import load_dotenv
-from .gui import App
-from .models import RapidAPIConfig
+from gui import App
+from models import RapidAPIConfig
 
 def HouseGuessMain():
     """Function to initialize API configuration from .env file and start HouseGuess"""

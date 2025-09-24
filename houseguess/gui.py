@@ -217,7 +217,7 @@ class MainMenu(ttk.Frame):
 
 class DifficultyScreen(ttk.Frame):
     def __init__(self, parent, controller: "App"):
-       """Set difficulty setting in main menu"""
+        """Set difficulty setting in main menu"""
         super().__init__(parent, style="TFrame")
         self.controller = controller
 

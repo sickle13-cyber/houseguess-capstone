@@ -6,7 +6,7 @@ Description: This file serves as the entrypoint for HouseGuess
 """
 
 # Libraries
-from .app import HouseGuessMain
+from app import HouseGuessMain
 
 # Start HouseGuess
 if __name__ == "__main__":

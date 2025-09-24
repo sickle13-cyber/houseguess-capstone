@@ -6,13 +6,13 @@ Description: This file contains initialization functionality for HouseGuess
 """
 
 # Libraries (Requires: pip install pillow tkintermapview)
+from __future__ import annotations
 import math
 import os
 import tkinter as tk
-from .api_client import rapidapi_search
-from .models import Place, Photo, RapidAPIConfig
-from .util import haversine_km
-from __future__ import annotations
+from api_client import rapidapi_search
+from models import Place, Photo, RapidAPIConfig
+from util import haversine_km
 from PIL import Image, ImageTk
 from tkinter import ttk, messagebox
 from tkintermapview import TkinterMapView
